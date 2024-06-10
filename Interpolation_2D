@@ -1,0 +1,39 @@
+clear
+clc
+format short
+n = 10;
+L0 = 0;
+L1 = 1;
+h = (L1-L0)/n;
+x = L0:h:L1;
+[X,Y] = meshgrid(x);
+%%
+X = X(:);   Y = Y(:);
+N = length(X);
+
+D = sqrt( (X-X').^2 + (Y-Y').^2 );
+
+Phi = @(r,c) exp(-(c*r).^2);
+c = 8;
+A = Phi(D,c);
+%%
+f = @(x,y) sin(x+y);
+b = f(X,Y);
+lambda = A\b;
+%%
+[~,y] = cheb(5,L0,L1);  %sort(randn(1,N));
+y = y(end:-1:1);
+[Xnew,Ynew] = meshgrid(y);
+Xnew = Xnew(:);   Ynew = Ynew(:);
+Dnew = sqrt( (X'-Xnew).^2 + (Y'-Ynew).^2 );
+A_new = Phi(Dnew,c);
+S = A_new*lambda;
+norm(S-f(Xnew,Ynew),inf)
+
+hold on
+plot3(Xnew,Ynew,S,'ro')
+
+[X,Y] = meshgrid(x);
+mesh(X,Y,f(X,Y))
+grid on
+view(45,45)
