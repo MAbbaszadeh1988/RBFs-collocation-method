@@ -1,0 +1,40 @@
+clear
+clc
+format shorte
+n = 80;
+L0 = -2;  L1 = 2;
+h = (L1-L0)/n;
+x = L0:h:L1;
+N = length(x);
+D = abs(x-x');
+Phi = @(r,c) sqrt( 1 + (c*r).^2 );
+% Phi = @(r,c) 1./sqrt( 1 + (c*r).^2 );
+% Phi = @(r,c) exp(-(c*r).^2);
+c = 10;
+A = Phi(D,c);
+%% Polynomial
+m = 1;
+P = ones(N,1);
+xp = x';
+for i = 1:m
+    P = [P xp.^i];
+end
+%%
+f = @(x) sin(x);
+b = [f(x');zeros(m+1,1)];
+M = [A P;P' zeros(m+1)];
+X = M\b;
+%%
+[~,tau] = cheb(10,L0,L1);%  Chebyshev points
+y = (tau(end:-1:1))';  %sort(randn(1,N));
+D_new =  abs(x-y');
+A_new = Phi(D_new,c);
+P = ones(length(y),1);
+yp = y';
+for i = 1:m
+    P = [P yp.^i];
+end
+M_new = [A_new P];
+S = M_new*X;
+%%
+norm(S-f(y'),inf)
