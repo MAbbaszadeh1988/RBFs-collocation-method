@@ -1,0 +1,66 @@
+clear all
+close all
+format shorte
+clc
+%%
+mbasis=6;
+a=0;
+b=1;
+h=1/20;
+x=a:h:b;
+T=0.5;
+dt=1e-3;
+[X,Y]=meshgrid(x);
+x = X(:);  y = Y(:);
+dim=length(x);
+boundary = find(x==a | x==b | y==a | y==b);
+boundary1 = find(x==a | x==b);
+boundary2 = find(y==a | y==b);
+c=8;
+%% 
+N =length(x);
+A=zeros(N);
+Ax=zeros(N);
+Ay=zeros(N);
+%%-------------------------------Shape Function-----------------------------
+gpos(1,:)=x;  gpos(2,:)=y;
+[Phi]=Differential_Matrix_New(gpos,x,y,c,N,mbasis,'Int');
+[Phix]=Differential_Matrix_New(gpos,x,y,c,N,mbasis,'ax');
+[Phiy]=Differential_Matrix_New(gpos,x,y,c,N,mbasis,'ay');
+..................................................................................
+A  = Phi(1:N,1:N);
+Ax = Phix(1:N,1:N);
+Ay = Phiy(1:N,1:N);
+................................................................................................
+[Phixx]=Differential_Matrix_New(gpos,x,y,c,N,mbasis,'axx');
+[Phiyy]=Differential_Matrix_New(gpos,x,y,c,N,mbasis,'ayy');
+Axx = Phixx(1:N,1:N);
+Ayy = Phiyy(1:N,1:N);
+%%
+A_left  = eye(N) - 0.5*dt*(Axx +  Ayy);
+A_right = eye(N) + 0.5*dt*(Axx +  Ayy);
+%%
+A_left(boundary,:) = A(boundary,:);
+%%
+u = @(x,y,t) exp(-t).*sin(pi.*x).*sin(pi.*y);
+f = @(x,y,t) (-1+2*pi^2).*exp(-t).*sin(pi.*x).*sin(pi.*y);
+
+%%
+U = u(x,y,0);
+j=0;
+while j*dt<=T
+    t=j*dt
+    F = A_right*U + dt*f(x,y,(j+0.5)*dt) ;
+
+    F(boundary) = u(x(boundary),y(boundary),(t+1)*dt);
+
+    U = A_left\F;
+
+    j=j+1;
+end
+clc
+norm(U(:)-u(x,y,T),inf)
+U = reshape(U,size(X));
+figure, surf(X,Y,U)
+figure, contourf(U)
+
